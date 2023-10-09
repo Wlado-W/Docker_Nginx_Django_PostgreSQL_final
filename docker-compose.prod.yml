@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  web:
+    image: wladow/dockerhub_django:latest
+    container_name: web
+    restart: unless-stopped
+    command: sh -c "sleep 10 && python manage.py migrate && python manage.py createsuperuser --noinput && gunicorn django_duo.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - static_volume:/home/app/web/staticfiles 
+    expose:
+      - 8000
+    environment:
+      - DJANGO_SUPERUSER_USERNAME=admin1_e4
+      - DJANGO_SUPERUSER_PASSWORD=admin1_e4
+      - DJANGO_SUPERUSER_EMAIL=admin1_e4@example.com
+      - DEBUG=1
+      - SECRET_KEY=1%!$le_jw_gi@58pz5wy3dzx^9p9tye6_8llk=s+*=7^adow3j
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1] 63f041235923.vps.myjino.ru
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=django_prod
+      - SQL_USER=django_prod
+      - SQL_PASSWORD=django_prod
+      - SQL_HOST=db
+      - SQL_PORT=5432
+      - DATABASE=postgres
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    container_name: db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=django_prod
+      - POSTGRES_PASSWORD=django_prod
+      - POSTGRES_DB=django_prod
+  nginx:
+    image: wladow/dockerhub_nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+    ports:
+      - 1337:80
+    depends_on:
+      - web
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
